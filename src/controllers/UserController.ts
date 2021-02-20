@@ -63,8 +63,6 @@ export const addOne = async (
   }
 };
 
-// FIXME: Mongoose の toJSON() のせいで Response に設定した型と実際に返ってくる型に違いが生じている
-// 案: 関数内で型変換を行なってから返却する
 // GET /api/users/:id
 export const findOne = async (
   req: express.Request<SpecificUserParams>,
@@ -78,7 +76,8 @@ export const findOne = async (
       // Not found
       return res.status(404).json();
     } else {
-      return res.json(targetUser.toJSON());
+      // Mongoose の toJSON で変換される
+      return res.json(targetUser as PublicUserInfo);
     }
   } catch (err) {
     return next(err);
@@ -104,7 +103,7 @@ export const getToken = async (
       // NotFound
       return res.status(404).json();
     }
-    // FIXME: パスワードのチェックをモデルに投げたい
+    // TODO: パスワードのチェックをモデルに投げたい
     if (!Bcrypt.compareSync(reqBody.password, user.password)) {
       // Incorrect Password
       return res.status(401).json();

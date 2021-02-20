@@ -6,10 +6,18 @@ import mongoose from "mongoose";
 import userRouter from "./routes/user";
 
 // MongoDB Setup
+import dotenv from "dotenv";
+dotenv.config();
+
+const DB_ID = process.env.DB_ID;
+const DB_PASSWORD = process.env.DB_PASSWORD;
+const DB_NAME = process.env.DB_NAME;
+const DB_URL = `mongodb+srv://${DB_ID}:${DB_PASSWORD}@cluster0.d9zki.mongodb.net/${DB_NAME}?retryWrites=true&w=majority`;
 
 mongoose.connect(DB_URL, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
+  useCreateIndex: true,
 });
 mongoose.Promise = global.Promise;
 
