@@ -1,5 +1,6 @@
 import express from "express";
 import Bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 import User, { UserDoc, PublicUserInfo, Role } from "../models/User";
 
@@ -51,15 +52,17 @@ export const addOne = async (
   next: express.NextFunction
 ): Promise<express.Response<UserDoc> | void> => {
   const reqBody = req.body;
-  reqBody.password = Bcrypt.hashSync(reqBody.password);
 
   try {
+    reqBody.password = Bcrypt.hashSync(reqBody.password);
     const newUser = await User.create({
       ...reqBody,
     });
     return res.status(201).json(newUser);
   } catch (err) {
-    return next(err);
+    console.error(err);
+    return res.status(400).json(err);
+    // return next(err);
   }
 };
 
@@ -81,6 +84,23 @@ export const findOne = async (
     }
   } catch (err) {
     return next(err);
+  }
+};
+
+const generateToken = (user: UserDoc): string | null => {
+  const payload = {
+    name: user.name,
+    role: user.role,
+  };
+  const option: jwt.SignOptions = {
+    issuer: "dev.oldbigbuddha.rest-api-with-jwt",
+    subject: user.id,
+  };
+
+  try {
+    return jwt.sign(payload, "secret", option);
+  } catch (err) {
+    return null;
   }
 };
 
@@ -108,11 +128,17 @@ export const getToken = async (
       // Incorrect Password
       return res.status(401).json();
     }
+
+    const token = generateToken(user);
+    if (token === null) {
+      return res.status(500).json();
+    }
+
     const userInfoWithToken: UserInfoWithJwtToken = {
       id: user._id,
       name: user.name,
       role: user.role,
-      token: "token",
+      token: token,
     };
 
     return res.json(userInfoWithToken);
